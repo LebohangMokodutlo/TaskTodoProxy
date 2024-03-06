@@ -1,0 +1,6 @@
+@TaskTodoProxy_HostAddress = http://localhost:5001
+
+GET {{TaskTodoProxy_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
