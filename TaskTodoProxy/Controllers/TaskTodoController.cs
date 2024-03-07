@@ -23,7 +23,7 @@ namespace TaskTodoProxy.Controllers
 
         public async Task<ActionResult<TaskTodo>> GetAllTaskTodo()
         {
-            object tasks = await _dataContext.TaskTodoTable.ToListAsync();
+            var tasks = await _dataContext.TaskTodoTable.ToListAsync();
         return Ok(tasks);
         }
 
