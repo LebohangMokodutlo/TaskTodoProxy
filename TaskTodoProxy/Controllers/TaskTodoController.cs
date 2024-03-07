@@ -23,7 +23,7 @@ namespace TaskTodoProxy.Controllers
 
         public async Task<ActionResult<TaskTodo>> GetAllTaskTodo()
         {
-            var tasks = await _dataContext.TaskTodoTable.ToListAsync();
+            object tasks = await _dataContext.TaskTodoTable.ToListAsync();
         return Ok(tasks);
         }
 
@@ -52,20 +52,40 @@ namespace TaskTodoProxy.Controllers
         }
 
         [HttpPut("{id}")]
-
-        public async Task<ActionResult<TaskTodo>> UpdateTaskTodo(TaskTodo updatedTaskTodo)
+        public async Task<IActionResult> UpdateTaskTodo(int id, [FromBody] TaskTodo updatedTask)
         {
-            var dbTask = await _dataContext.TaskTodoTable.FindAsync(updatedTaskTodo.Id);
-            if (dbTask == null)
+            var existingTask = await _dataContext.TaskTodoTable.FindAsync(id);
+            if (existingTask == null)
             {
                 return BadRequest("Task not found");
             }
 
-            dbTask.Department = updatedTaskTodo.Department;
-            dbTask.Title = updatedTaskTodo.Title;
-            dbTask.Description = updatedTaskTodo.Description = updatedTaskTodo.Title;
+            existingTask.Department = updatedTask.Department;
+            existingTask.Title = updatedTask.Title;
+            existingTask.Description = updatedTask.Description;
+            existingTask.ClientUrl = updatedTask.ClientUrl;
+            existingTask.ClientBudget = updatedTask.ClientBudget;
+            existingTask.Deadline = updatedTask.Deadline;
+            existingTask.Priority = updatedTask.Priority;
 
             await _dataContext.SaveChangesAsync();
+
+            return Ok(existingTask);
+        }
+
+        [HttpDelete]
+
+        public async Task<ActionResult<List<TaskTodo>>> DeleteTaskTodo(int id)
+        {
+           var  dbTask = await _dataContext.TaskTodoTable.FindAsync(id);
+
+            if (dbTask == null)
+            {
+                return BadRequest("Task not found");
+            }
+            _dataContext.TaskTodoTable.Remove(dbTask);
+            await _dataContext.SaveChangesAsync();
+
 
             return Ok(await _dataContext.TaskTodoTable.ToListAsync());
         }
