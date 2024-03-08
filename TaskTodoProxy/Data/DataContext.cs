@@ -12,4 +12,5 @@ namespace TaskTodoProxy.Data
 
         public DbSet<TaskTodo> TaskTodoTable { get; set; }
     }
+
 }

@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
-using TaskTodoProxy.Data;
+using TaskTodoProxy.Dto;
 using TaskTodoProxy.Entities;
+using TaskTodoProxy.Services;
 
 namespace TaskTodoProxy.Controllers
 {
@@ -11,84 +11,64 @@ namespace TaskTodoProxy.Controllers
     [ApiController]
     public class TaskTodoController : ControllerBase
     {
-        private readonly DataContext _dataContext;
+        private readonly TaskTodoService _taskTodoService;
 
-        public TaskTodoController(DataContext dataContext)
+        public TaskTodoController(TaskTodoService taskTodoService)
         {
-            _dataContext = dataContext;
+            _taskTodoService = taskTodoService;
         }
 
-
         [HttpGet]
-
         public async Task<ActionResult<TaskTodo>> GetAllTaskTodo()
         {
-            var tasks = await _dataContext.TaskTodoTable.ToListAsync();
-        return Ok(tasks);
+            var tasks = await _taskTodoService.GetAllTasks();
+            return Ok(tasks);
         }
 
         [HttpGet("{id}")]
-
         public async Task<ActionResult<List<TaskTodo>>> GetTaskTodoById(int id)
         {
-            var task = await _dataContext.TaskTodoTable.FindAsync(id);
-            if(task == null)
+            var task = await _taskTodoService.GetTaskById(id);
+            if (task == null)
             {
-                return BadRequest("Task not found");    
+                return BadRequest("Task not found");
             }
 
             return Ok(task);
         }
 
         [HttpPost]
-
-        public async Task<ActionResult<List<TaskTodo>>> CreateTaskTodo(TaskTodo task)
+        public async Task<ActionResult<List<TaskTodo>>> CreateTaskTodo(TaskTodoDto taskDto)
         {
-            _dataContext.TaskTodoTable.Add(task);
-            await _dataContext.SaveChangesAsync();
-
-
-            return Ok(await _dataContext.TaskTodoTable.ToListAsync());
+            await _taskTodoService.CreateTask(taskDto);
+            return Ok(await _taskTodoService.GetAllTasks());
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTaskTodo(int id, [FromBody] TaskTodo updatedTask)
+        public async Task<ActionResult<TaskTodo>> UpdateTaskTodo(int id, [FromBody] TaskTodoDto updatedTaskDto)
         {
-            var existingTask = await _dataContext.TaskTodoTable.FindAsync(id);
-            if (existingTask == null)
+            var updatedTask = await _taskTodoService.UpdateTask(id, updatedTaskDto);
+
+            if (updatedTask == null)
             {
                 return BadRequest("Task not found");
             }
 
-            existingTask.Department = updatedTask.Department;
-            existingTask.Title = updatedTask.Title;
-            existingTask.Description = updatedTask.Description;
-            existingTask.ClientUrl = updatedTask.ClientUrl;
-            existingTask.ClientBudget = updatedTask.ClientBudget;
-            existingTask.Deadline = updatedTask.Deadline;
-            existingTask.Priority = updatedTask.Priority;
-
-            await _dataContext.SaveChangesAsync();
-
-            return Ok(existingTask);
+            return Ok(updatedTask);
         }
 
-        [HttpDelete]
 
+        [HttpDelete("{id}")]
         public async Task<ActionResult<List<TaskTodo>>> DeleteTaskTodo(int id)
         {
-           var  dbTask = await _dataContext.TaskTodoTable.FindAsync(id);
 
-            if (dbTask == null)
+            var taskExists = await _taskTodoService.GetTaskById(id);
+            if (taskExists == null)
             {
-                return BadRequest("Task not found");
+                return NotFound($"Task with id {id} not found.");
             }
-            _dataContext.TaskTodoTable.Remove(dbTask);
-            await _dataContext.SaveChangesAsync();
-
-
-            return Ok(await _dataContext.TaskTodoTable.ToListAsync());
+            await _taskTodoService.DeleteTask(id);
+            return Ok(await _taskTodoService.GetAllTasks());
         }
-
     }
 }
